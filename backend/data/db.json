@@ -1,0 +1,113 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "username": "admin",
+      "password": "$2a$10$9SM6YJgfDBfWPp8wwXXrAuUn8AQlX7FuseBYkdDOkFTRuFQgzib/e",
+      "role": "admin",
+      "email": "admin@sltc.lk",
+      "contact": "+94 77 123 4567",
+      "registrationNo": "ADM-001",
+      "createdAt": "2026-07-16T10:01:46.212Z"
+    },
+    {
+      "id": "u2",
+      "username": "student1",
+      "password": "$2a$10$I.7AX.yT3Rc7kgG8AQUXouR438ABMslXjLWErGpR2RzS5ioMZr7xi",
+      "role": "student",
+      "email": "student1@sltc.lk",
+      "contact": "+94 71 987 6543",
+      "registrationNo": "CIT-24-01-0369",
+      "createdAt": "2026-07-16T10:01:46.293Z"
+    },
+    {
+      "id": "u3",
+      "username": "lecturer1",
+      "password": "$2a$10$rFam/c6t7JgSk6Dat5dqQOzmNxyZa9Ocuv9KyD6a84gZkyT3s1NMG",
+      "role": "lecturer",
+      "email": "lecturer1@sltc.lk",
+      "contact": "+94 72 456 7890",
+      "registrationNo": "LEC-022",
+      "createdAt": "2026-07-16T10:01:46.372Z"
+    },
+    {
+      "id": "u4",
+      "username": "security",
+      "password": "$2a$10$LH/zNHKuLHgSILcPtwgrR.mhgLr0tj50siXl6NoGi/.Ab23ZSYDdG",
+      "role": "security",
+      "email": "security@sltc.lk",
+      "contact": "+94 75 111 2222",
+      "registrationNo": "SEC-101",
+      "createdAt": "2026-07-16T10:01:46.451Z"
+    }
+  ],
+  "items": [
+    {
+      "id": "i1",
+      "title": "Student ID Card",
+      "description": "Found a student ID card on the main desk of the central library. Belongs to MJ.Ilmaan Ahamed.",
+      "category": "Documents",
+      "location": "Library",
+      "date": "2026-07-15",
+      "type": "found",
+      "photoUrl": "",
+      "reportedBy": "u4",
+      "reportedByName": "security",
+      "status": "available",
+      "createdAt": "2026-07-15T10:01:46.451Z"
+    },
+    {
+      "id": "i2",
+      "title": "Dell Laptop Charger",
+      "description": "Lost my Dell laptop charger (65W, black) probably in Hall B during the morning lecture.",
+      "category": "Electronics",
+      "location": "Lecture Hall B",
+      "date": "2026-07-16",
+      "type": "lost",
+      "photoUrl": "",
+      "reportedBy": "u2",
+      "reportedByName": "student1",
+      "status": "available",
+      "createdAt": "2026-07-16T10:01:46.451Z"
+    },
+    {
+      "id": "i3",
+      "title": "Stainless Steel Water Bottle",
+      "description": "Silver thermos bottle found in the university gymnasium near the treadmills. It has a green sticker.",
+      "category": "Personal Accessories",
+      "location": "Gymnasium",
+      "date": "2026-07-14",
+      "type": "found",
+      "photoUrl": "",
+      "reportedBy": "u3",
+      "reportedByName": "lecturer1",
+      "status": "available",
+      "createdAt": "2026-07-14T10:01:46.451Z"
+    },
+    {
+      "id": "i4",
+      "title": "Keys with Red Keychain",
+      "description": "Lost my hostel/room keys with a red SLTC circular keychain. Might have dropped them walking from Hostel A to Canteen.",
+      "category": "Keys",
+      "location": "Pathway/Canteen",
+      "date": "2026-07-16",
+      "type": "lost",
+      "photoUrl": "",
+      "reportedBy": "u2",
+      "reportedByName": "student1",
+      "status": "available",
+      "createdAt": "2026-07-16T10:01:46.451Z"
+    }
+  ],
+  "claims": [],
+  "notifications": [
+    {
+      "id": "n1",
+      "userId": "u2",
+      "message": "Welcome to the SLTC Lost & Found portal! You can now report lost or found items.",
+      "type": "system",
+      "isRead": false,
+      "createdAt": "2026-07-16T10:01:46.451Z"
+    }
+  ]
+}
