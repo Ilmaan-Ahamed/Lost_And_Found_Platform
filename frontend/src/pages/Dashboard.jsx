@@ -130,7 +130,7 @@ const Dashboard = () => {
 
       <div className="dashboard-grid">
         {/* Sidebar */}
-        <aside className="sidebar animate-fade-in">
+        <aside className="sidebar animate-fade-in-left">
           <div className="profile-card">
             <div className="avatar">
               {user.username.charAt(0).toUpperCase()}
@@ -211,7 +211,7 @@ const Dashboard = () => {
             <>
               {/* My Reported Items Tab */}
               {activeTab === 'reported' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in-up">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ fontSize: '20px', color: 'var(--sltc-blue)' }}>Reported Items History</h2>
                     <Link to="/report" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
@@ -227,8 +227,8 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {myItems.map(item => (
-                        <div key={item.id} className="claim-row animate-fade-in" style={{ padding: '16px', gap: '16px' }}>
+                      {myItems.map((item, idx) => (
+                        <div key={item.id} className={`claim-row animate-fade-in-up stagger-load delay-${((idx % 5) + 1) * 100}`} style={{ padding: '16px', gap: '16px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                             <div style={{ fontSize: '24px', width: '40px', height: '40px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               {item.category === 'Electronics' ? '💻' :
@@ -263,7 +263,7 @@ const Dashboard = () => {
 
               {/* My Claim Requests Tab */}
               {activeTab === 'claims' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in-up">
                   <h2 style={{ fontSize: '20px', color: 'var(--sltc-blue)', marginBottom: '20px' }}>Your Claim Claims History</h2>
 
                   {myClaims.length === 0 ? (
@@ -273,8 +273,8 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                      {myClaims.map(claim => (
-                        <div key={claim.id} className="claim-row animate-fade-in" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
+                      {myClaims.map((claim, idx) => (
+                        <div key={claim.id} className={`claim-row animate-fade-in-up stagger-load delay-${((idx % 5) + 1) * 100}`} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                             <div>
                               <h4 style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: '600' }}>
@@ -305,7 +305,7 @@ const Dashboard = () => {
 
               {/* Notifications Tab */}
               {activeTab === 'notifications' && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in-up">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h2 style={{ fontSize: '20px', color: 'var(--sltc-blue)' }}>Notification Box</h2>
                     {notifications.length > 0 && (
@@ -321,10 +321,10 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     <div className="notifications-panel">
-                      {notifications.map(notif => (
+                      {notifications.map((notif, idx) => (
                         <div 
                           key={notif.id} 
-                          className={`notification-card ${!notif.isRead ? 'unread' : ''}`}
+                          className={`notification-card ${!notif.isRead ? 'unread' : ''} animate-fade-in-up stagger-load delay-${((idx % 5) + 1) * 100}`}
                           onClick={() => !notif.isRead && handleMarkAsRead(notif.id)}
                           style={{ cursor: !notif.isRead ? 'pointer' : 'default' }}
                         >

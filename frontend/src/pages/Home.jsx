@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, PlusCircle, ShieldCheck, MapPin, Calendar, Clock, ArrowRight } from 'lucide-react';
+import gsap from 'gsap';
 
 const Home = () => {
   const [recentItems, setRecentItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ reported: 0, returned: 0, activeClaims: 0 });
+  const heroRef = useRef(null);
+  const heroContentRef = useRef(null);
+  const heroVisualRef = useRef(null);
+  const statsRef = useRef(null);
+  const recentCardsRef = useRef([]);
+  const featureCardsRef = useRef([]);
 
   useEffect(() => {
     const fetchRecentItems = async () => {
@@ -14,11 +21,10 @@ const Home = () => {
         if (response.ok) {
           const data = await response.json();
           setRecentItems(data.slice(0, 3));
-          
-          // Calculate counts
+
           const reported = data.length;
-          const returned = data.filter(i => i.status === 'returned').length;
-          const activeClaims = data.filter(i => i.status === 'claimed').length;
+          const returned = data.filter((item) => item.status === 'returned').length;
+          const activeClaims = data.filter((item) => item.status === 'claimed').length;
           setStats({ reported, returned, activeClaims });
         }
       } catch (err) {
@@ -31,20 +37,49 @@ const Home = () => {
     fetchRecentItems();
   }, []);
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const heroTimeline = gsap.timeline({ defaults: { ease: 'power3.out' } });
+      heroTimeline
+        .from(heroRef.current, { opacity: 0, y: 24, duration: 0.7 })
+        .from([heroContentRef.current, heroVisualRef.current], { opacity: 0, y: 28, duration: 0.7, stagger: 0.15 }, '-=0.25')
+        .from(statsRef.current, { opacity: 0, y: 18, duration: 0.55 }, '-=0.2');
+    }, heroRef);
+
+    return () => ctx.revert();
+  }, []);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    const cards = recentCardsRef.current.filter(Boolean);
+    if (cards.length) {
+      gsap.from(cards, { opacity: 0, y: 24, duration: 0.6, stagger: 0.12, ease: 'power3.out' });
+    }
+  }, [loading, recentItems]);
+
+  useEffect(() => {
+    const cards = featureCardsRef.current.filter(Boolean);
+    if (cards.length) {
+      gsap.from(cards, { opacity: 0, y: 24, duration: 0.6, stagger: 0.14, delay: 0.1, ease: 'power3.out' });
+    }
+  }, []);
+
   return (
     <div className="animate-fade-in">
-      {/* Hero Section */}
-      <section className="hero">
+      <section className="hero" ref={heroRef}>
         <div className="container hero-grid">
-          <div>
-            <h1 className="hero-title">
+          <div ref={heroContentRef}>
+            <h1 className="hero-title animate-fade-in-up">
               Lost Something? <br />
               <span style={{ color: 'var(--sltc-gold)' }}>We'll Help You Find It.</span>
             </h1>
-            <p className="hero-subtitle">
+            <p className="hero-subtitle animate-fade-in-up delay-100 stagger-load">
               SLTC Research University's official digital Lost & Found portal. Report missing items, search discovered property, and claim your belongings quickly.
             </p>
-            <div className="hero-actions">
+            <div className="hero-actions animate-fade-in-up delay-200 stagger-load">
               <Link to="/search" className="btn btn-primary" style={{ padding: '12px 24px' }}>
                 <Search size={18} />
                 <span>Browse Found Items</span>
@@ -54,8 +89,8 @@ const Home = () => {
                 <span>Report Lost / Found</span>
               </Link>
             </div>
-            
-            <div className="hero-stats">
+
+            <div className="hero-stats animate-fade-in-up delay-300 stagger-load" ref={statsRef}>
               <div className="stat-item">
                 <span className="stat-number">{stats.reported || 12}</span>
                 <span className="stat-label">Total Items Logged</span>
@@ -71,11 +106,11 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="hero-visual">
+          <div className="hero-visual animate-fade-in-right delay-200 stagger-load" ref={heroVisualRef}>
             <div className="hero-circle"></div>
-            <div className="hero-card-stack">
+            <div className="hero-card-stack animate-float">
               <div>
-                <span className="status-pill status-available" style={{ marginBottom: '12px' }}>
+                <span className="status-pill status-available pulse-available" style={{ marginBottom: '12px' }}>
                   Available
                 </span>
                 <h3 style={{ fontSize: '20px', color: 'var(--sltc-blue)', marginBottom: '8px' }}>
@@ -100,7 +135,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Recent Items Section */}
       <section style={{ padding: '60px 0', backgroundColor: 'var(--bg-secondary)' }}>
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
@@ -126,16 +160,22 @@ const Home = () => {
             </p>
           ) : (
             <div className="grid-cards">
-              {recentItems.map(item => (
-                <div className="card" key={item.id}>
+              {recentItems.map((item, idx) => (
+                <div
+                  className={`card animate-fade-in-up stagger-load delay-${(idx + 1) * 100}`}
+                  key={item.id}
+                  ref={(element) => {
+                    recentCardsRef.current[idx] = element;
+                  }}
+                >
                   <div className="card-img-container">
                     {item.photoUrl ? (
                       <img src={item.photoUrl} alt={item.title} className="card-img" />
                     ) : (
                       <span className="card-placeholder-icon" style={{ fontSize: '32px' }}>
                         {item.category === 'Electronics' ? '💻' :
-                         item.category === 'Documents' ? '📁' :
-                         item.category === 'Keys' ? '🔑' : '🎒'}
+                          item.category === 'Documents' ? '📁' :
+                            item.category === 'Keys' ? '🔑' : '🎒'}
                       </span>
                     )}
                     <span className={`card-badge ${item.type === 'lost' ? 'badge-lost' : 'badge-found'}`}>
@@ -175,15 +215,20 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-primary)' }}>
         <div className="container">
           <h2 style={{ textAlign: 'center', fontSize: '32px', color: 'var(--sltc-blue)', marginBottom: '48px' }}>
             System Objectives & Design Features
           </h2>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 32 }}>
-            <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div
+              className="animate-fade-in-up stagger-load delay-100"
+              ref={(element) => {
+                featureCardsRef.current[0] = element;
+              }}
+              style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}
+            >
               <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sltc-blue-glow)', display: 'flex', alignItems: 'center', justifyItems: 'center', color: 'var(--sltc-blue)', marginBottom: '16px', justifyContent: 'center' }}>
                 <Search size={24} />
               </div>
@@ -193,7 +238,13 @@ const Home = () => {
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div
+              className="animate-fade-in-up stagger-load delay-200"
+              ref={(element) => {
+                featureCardsRef.current[1] = element;
+              }}
+              style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}
+            >
               <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sltc-blue-glow)', display: 'flex', alignItems: 'center', justifyItems: 'center', color: 'var(--sltc-blue)', marginBottom: '16px', justifyContent: 'center' }}>
                 <PlusCircle size={24} />
               </div>
@@ -203,7 +254,13 @@ const Home = () => {
               </p>
             </div>
 
-            <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
+            <div
+              className="animate-fade-in-up stagger-load delay-300"
+              ref={(element) => {
+                featureCardsRef.current[2] = element;
+              }}
+              style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}
+            >
               <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--sltc-blue-glow)', display: 'flex', alignItems: 'center', justifyItems: 'center', color: 'var(--sltc-blue)', marginBottom: '16px', justifyContent: 'center' }}>
                 <ShieldCheck size={24} />
               </div>

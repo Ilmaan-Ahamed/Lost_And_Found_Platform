@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -52,28 +52,28 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-function AppContent() {
+function AppContent({ theme, toggleTheme }) {
   return (
     <div className="app-container">
-      <Navbar />
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
       <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/search" element={<SearchItems />} />
-          
+
           <Route path="/report" element={
             <ProtectedRoute>
               <ReportItem />
             </ProtectedRoute>
           } />
-          
+
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
           } />
-          
+
           <Route path="/admin" element={
             <AdminRoute>
               <AdminPanel />
@@ -89,10 +89,33 @@ function AppContent() {
 }
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') {
+      return 'light';
+    }
+
+    const storedTheme = window.localStorage.getItem('sltc-theme');
+    if (storedTheme === 'dark' || storedTheme === 'light') {
+      return storedTheme;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem('sltc-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));
+  };
+
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <AppContent theme={theme} toggleTheme={toggleTheme} />
       </AuthProvider>
     </Router>
   );

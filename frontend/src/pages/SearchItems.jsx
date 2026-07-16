@@ -228,15 +228,15 @@ const SearchItems = () => {
           <div className="spinner"></div>
         </div>
       ) : items.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
+        <div className="animate-fade-in-up" style={{ textAlign: 'center', padding: '80px 20px', backgroundColor: 'var(--bg-secondary)', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
           <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
           <h3 style={{ fontSize: '20px', marginBottom: '8px' }}>No items match your query</h3>
           <p style={{ color: 'var(--text-secondary)' }}>Try adjusting your tags, keyword terms, or filtering scopes.</p>
         </div>
       ) : (
         <div className="grid-cards">
-          {items.map(item => (
-            <div className="card" key={item.id} onClick={() => handleOpenItem(item)} style={{ cursor: 'pointer' }}>
+          {items.map((item, idx) => (
+            <div className={`card animate-fade-in-up stagger-load delay-${((idx % 5) + 1) * 100}`} key={item.id} onClick={() => handleOpenItem(item)} style={{ cursor: 'pointer' }}>
               <div className="card-img-container">
                 {item.photoUrl ? (
                   <img src={item.photoUrl} alt={item.title} className="card-img" />
@@ -282,15 +282,11 @@ const SearchItems = () => {
       {/* Selected Item Modal Popup */}
       {selectedItem && (
         <div 
-          style={{ 
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
-            backgroundColor: 'rgba(15, 45, 89, 0.4)', backdropFilter: 'blur(4px)', 
-            display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 
-          }}
+          className="modal-overlay"
           onClick={handleCloseItem}
         >
           <div 
-            className="card animate-fade-in" 
+            className="card animate-scale-in" 
             style={{ 
               width: '90%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto', 
               backgroundColor: 'var(--bg-secondary)', padding: '32px', position: 'relative', 

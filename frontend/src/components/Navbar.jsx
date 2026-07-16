@@ -1,21 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, PlusCircle, Search, Home, LayoutDashboard, ShieldAlert } from 'lucide-react';
+import { LogOut, User, PlusCircle, Search, Home, LayoutDashboard, ShieldAlert, Sun, Moon, Menu, X } from 'lucide-react';
 
-const Navbar = () => {
+const Navbar = ({ theme, toggleTheme }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isDarkMode = theme === 'dark';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  const toggleMenu = () => setIsMenuOpen((current) => !current);
+  const closeMenu = () => setIsMenuOpen(false);
+
   return (
     <header className="header-glass">
       <div className="container nav-flex">
-        <Link to="/" className="logo-container">
+        <Link to="/" className="logo-container" onClick={closeMenu}>
           <div className="logo-icon">🦁</div>
           <div className="logo-text">
             <span className="logo-title">SLTC PORTAL</span>
@@ -23,7 +28,33 @@ const Navbar = () => {
           </div>
         </Link>
 
-        <nav>
+        <div className="header-actions">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+          >
+            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+
+          <button className="mobile-menu-button" type="button" onClick={toggleMenu} aria-label="Toggle navigation menu">
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+
+        <nav className={`nav-container ${isMenuOpen ? 'open' : ''}`}>
+          <div className="mobile-nav-header">
+            <Link to="/" className="logo-container" onClick={closeMenu}>
+              <div className="logo-icon">🦁</div>
+              <div className="logo-text">
+                <span className="logo-title">SLTC PORTAL</span>
+              </div>
+            </Link>
+            <button className="mobile-close-button" type="button" onClick={closeMenu} aria-label="Close navigation menu">
+              <X size={20} />
+            </button>
+          </div>
           <ul className="nav-links">
             <li>
               <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
@@ -41,7 +72,7 @@ const Navbar = () => {
                 </div>
               </NavLink>
             </li>
-            
+
             {user && (
               <>
                 <li>
@@ -96,6 +127,7 @@ const Navbar = () => {
             </li>
           </ul>
         </nav>
+        <div className={`mobile-backdrop ${isMenuOpen ? 'active' : ''}`} onClick={closeMenu} />
       </div>
     </header>
   );

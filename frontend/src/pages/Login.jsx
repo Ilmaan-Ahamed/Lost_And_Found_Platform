@@ -60,8 +60,8 @@ const Login = () => {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '40px 24px' }} className="animate-fade-in">
-      <div className="card animate-fade-in" style={{ width: '100%', maxWidth: '480px', padding: '32px', boxShadow: 'var(--shadow-lg)' }}>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', padding: '40px 24px' }}>
+      <div className="card animate-scale-in" style={{ width: '100%', maxWidth: '480px', padding: '32px', boxShadow: 'var(--shadow-lg)' }}>
         
         {/* Toggle Headers */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '24px' }}>
@@ -71,7 +71,10 @@ const Login = () => {
             style={{ 
               background: 'none', border: 'none', fontSize: '20px', fontWeight: isLogin ? '700' : '500', 
               color: isLogin ? 'var(--sltc-blue)' : 'var(--text-muted)', cursor: 'pointer',
-              borderBottom: isLogin ? '3px solid var(--sltc-blue)' : 'none', paddingBottom: '8px'
+              borderBottom: '3px solid',
+              borderBottomColor: isLogin ? 'var(--sltc-blue)' : 'transparent',
+              paddingBottom: '8px',
+              transition: 'all 0.3s ease'
             }}
           >
             Log In
@@ -82,15 +85,18 @@ const Login = () => {
             style={{ 
               background: 'none', border: 'none', fontSize: '20px', fontWeight: !isLogin ? '700' : '500', 
               color: !isLogin ? 'var(--sltc-blue)' : 'var(--text-muted)', cursor: 'pointer',
-              borderBottom: !isLogin ? '3px solid var(--sltc-blue)' : 'none', paddingBottom: '8px'
+              borderBottom: '3px solid',
+              borderBottomColor: !isLogin ? 'var(--sltc-blue)' : 'transparent',
+              paddingBottom: '8px',
+              transition: 'all 0.3s ease'
             }}
           >
             Sign Up
           </button>
         </div>
-
+ 
         {error && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', padding: '12px', borderRadius: 'var(--radius-md)', marginBottom: '20px', fontSize: '13px' }}>
+          <div className="animate-shake" style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', color: '#b91c1c', padding: '12px', borderRadius: 'var(--radius-md)', marginBottom: '20px', fontSize: '13px' }}>
             <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{error}</span>
           </div>
