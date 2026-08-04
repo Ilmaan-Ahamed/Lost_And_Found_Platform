@@ -122,11 +122,11 @@ On first run, the backend seeds the database with sample accounts you can use to
 
 | Name | GitHub |
 |------|--------|
-| Ilmaan Ahamed | [@Ilmaan-Ahamed](https://github.com/Ilmaan-Ahamed) |
-| Mohamed Afrith| [@MhoAfrith](https://github.com/MhoAfrith)         |
-| Mohamed Aasim | [@MOHAMED-AASIM](https://github.com/MOHAMED-AASIM) |
+| Ilmaan Ahamed | [Ilmaan-Ahamed](https://github.com/Ilmaan-Ahamed) |
+| Mohamed Afrith| [MhoAfrith](https://github.com/MhoAfrith)         |
+| Mohamed Aasim | [MOHAMED-AASIM](https://github.com/MOHAMED-AASIM) |
 | Mohamed Himas | [himasRm](https://github.com/himasRm)              |
-> Are there other teammates who worked on this project? Let me know their GitHub usernames and I'll add them here.
+
 
 ## 🤝 Contributing
 
