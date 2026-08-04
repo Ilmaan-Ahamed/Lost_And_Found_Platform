@@ -1,295 +1,334 @@
-const fs = require('fs');
-const path = require('path');
 const bcrypt = require('bcryptjs');
+const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'db.json');
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sltc-lost-and-found';
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+let client;
+let database;
+let connectPromise;
 
-// Initial default state
-const defaultDb = {
-  users: [],
-  items: [],
-  claims: [],
-  notifications: []
+const hashPassword = (password) => bcrypt.hashSync(password, 10);
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const connectToDatabase = async () => {
+  if (database) {
+    return database;
+  }
+
+  if (!connectPromise) {
+    connectPromise = (async () => {
+      client = new MongoClient(MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000
+      });
+
+      await client.connect();
+      database = client.db();
+
+      await Promise.all([
+        database.collection('users').createIndex({ username: 1 }, { unique: true }),
+        database.collection('users').createIndex({ id: 1 }, { unique: true }),
+        database.collection('items').createIndex({ id: 1 }, { unique: true }),
+        database.collection('claims').createIndex({ id: 1 }, { unique: true }),
+        database.collection('notifications').createIndex({ id: 1 }, { unique: true })
+      ]);
+
+      await seedInitialData();
+      return database;
+    })().catch((error) => {
+      connectPromise = null;
+      throw error;
+    });
+  }
+
+  return connectPromise;
 };
 
-// Helper to hash password synchronously
-const hashPassword = (password) => {
-  return bcrypt.hashSync(password, 10);
-};
+const seedInitialData = async () => {
+  const users = database.collection('users');
+  const items = database.collection('items');
+  const notifications = database.collection('notifications');
 
-// Initialize DB if empty
-if (!fs.existsSync(DATA_FILE)) {
-  // Pre-populate with admin, student, security users and some mock lost/found items
-  const initialUsers = [
-    {
-      id: "u1",
-      username: "admin",
-      password: hashPassword("admin123"),
-      role: "admin",
-      email: "admin@sltc.lk",
-      contact: "+94 77 123 4567",
-      registrationNo: "ADM-001",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "u2",
-      username: "student1",
-      password: hashPassword("student123"),
-      role: "student",
-      email: "student1@sltc.lk",
-      contact: "+94 71 987 6543",
-      registrationNo: "CIT-24-01-0369",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "u3",
-      username: "lecturer1",
-      password: hashPassword("lecturer123"),
-      role: "lecturer",
-      email: "lecturer1@sltc.lk",
-      contact: "+94 72 456 7890",
-      registrationNo: "LEC-022",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "u4",
-      username: "security",
-      password: hashPassword("security123"),
-      role: "security",
-      email: "security@sltc.lk",
-      contact: "+94 75 111 2222",
-      registrationNo: "SEC-101",
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  const initialItems = [
-    {
-      id: "i1",
-      title: "Student ID Card",
-      description: "Found a student ID card on the main desk of the central library. Belongs to MJ.Ilmaan Ahamed.",
-      category: "Documents",
-      location: "Library",
-      date: "2026-07-15",
-      type: "found",
-      photoUrl: "",
-      reportedBy: "u4",
-      reportedByName: "security",
-      status: "available",
-      createdAt: new Date(Date.now() - 24 * 3600000).toISOString() // 1 day ago
-    },
-    {
-      id: "i2",
-      title: "Dell Laptop Charger",
-      description: "Lost my Dell laptop charger (65W, black) probably in Hall B during the morning lecture.",
-      category: "Electronics",
-      location: "Lecture Hall B",
-      date: "2026-07-16",
-      type: "lost",
-      photoUrl: "",
-      reportedBy: "u2",
-      reportedByName: "student1",
-      status: "available",
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "i3",
-      title: "Stainless Steel Water Bottle",
-      description: "Silver thermos bottle found in the university gymnasium near the treadmills. It has a green sticker.",
-      category: "Personal Accessories",
-      location: "Gymnasium",
-      date: "2026-07-14",
-      type: "found",
-      photoUrl: "",
-      reportedBy: "u3",
-      reportedByName: "lecturer1",
-      status: "available",
-      createdAt: new Date(Date.now() - 2 * 24 * 3600000).toISOString() // 2 days ago
-    },
-    {
-      id: "i4",
-      title: "Keys with Red Keychain",
-      description: "Lost my hostel/room keys with a red SLTC circular keychain. Might have dropped them walking from Hostel A to Canteen.",
-      category: "Keys",
-      location: "Pathway/Canteen",
-      date: "2026-07-16",
-      type: "lost",
-      photoUrl: "",
-      reportedBy: "u2",
-      reportedByName: "student1",
-      status: "available",
-      createdAt: new Date().toISOString()
-    }
-  ];
-
-  const initialDb = {
-    users: initialUsers,
-    items: initialItems,
-    claims: [],
-    notifications: [
+  const userCount = await users.countDocuments();
+  if (userCount === 0) {
+    await users.insertMany([
       {
-        id: "n1",
-        userId: "u2",
-        message: "Welcome to the SLTC Lost & Found portal! You can now report lost or found items.",
-        type: "system",
-        isRead: false,
+        id: 'u1',
+        username: 'admin',
+        password: hashPassword('admin123'),
+        role: 'admin',
+        email: 'admin@sltc.lk',
+        contact: '+94 77 123 4567',
+        registrationNo: 'ADM-001',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'u2',
+        username: 'student1',
+        password: hashPassword('student123'),
+        role: 'student',
+        email: 'student1@sltc.lk',
+        contact: '+94 71 987 6543',
+        registrationNo: 'CIT-24-01-0369',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'u3',
+        username: 'lecturer1',
+        password: hashPassword('lecturer123'),
+        role: 'lecturer',
+        email: 'lecturer1@sltc.lk',
+        contact: '+94 72 456 7890',
+        registrationNo: 'LEC-022',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'u4',
+        username: 'security',
+        password: hashPassword('security123'),
+        role: 'security',
+        email: 'security@sltc.lk',
+        contact: '+94 75 111 2222',
+        registrationNo: 'SEC-101',
         createdAt: new Date().toISOString()
       }
-    ]
-  };
+    ]);
+  }
 
-  fs.writeFileSync(DATA_FILE, JSON.stringify(initialDb, null, 2));
-}
+  const itemCount = await items.countDocuments();
+  if (itemCount === 0) {
+    await items.insertMany([
+      {
+        id: 'i1',
+        title: 'Student ID Card',
+        description: 'Found a student ID card on the main desk of the central library. Belongs to MJ.Ilmaan Ahamed.',
+        category: 'Documents',
+        location: 'Library',
+        date: '2026-07-15',
+        type: 'found',
+        photoUrl: '',
+        reportedBy: 'u4',
+        reportedByName: 'security',
+        status: 'available',
+        createdAt: new Date(Date.now() - 24 * 3600000).toISOString()
+      },
+      {
+        id: 'i2',
+        title: 'Dell Laptop Charger',
+        description: 'Lost my Dell laptop charger (65W, black) probably in Hall B during the morning lecture.',
+        category: 'Electronics',
+        location: 'Lecture Hall B',
+        date: '2026-07-16',
+        type: 'lost',
+        photoUrl: '',
+        reportedBy: 'u2',
+        reportedByName: 'student1',
+        status: 'available',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'i3',
+        title: 'Stainless Steel Water Bottle',
+        description: 'Silver thermos bottle found in the university gymnasium near the treadmills. It has a green sticker.',
+        category: 'Personal Accessories',
+        location: 'Gymnasium',
+        date: '2026-07-14',
+        type: 'found',
+        photoUrl: '',
+        reportedBy: 'u3',
+        reportedByName: 'lecturer1',
+        status: 'available',
+        createdAt: new Date(Date.now() - 2 * 24 * 3600000).toISOString()
+      },
+      {
+        id: 'i4',
+        title: 'Keys with Red Keychain',
+        description: 'Lost my hostel/room keys with a red SLTC circular keychain. Might have dropped them walking from Hostel A to Canteen.',
+        category: 'Keys',
+        location: 'Pathway/Canteen',
+        date: '2026-07-16',
+        type: 'lost',
+        photoUrl: '',
+        reportedBy: 'u2',
+        reportedByName: 'student1',
+        status: 'available',
+        createdAt: new Date().toISOString()
+      }
+    ]);
+  }
 
-// Database helper functions
-const readData = () => {
-  try {
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(raw);
-  } catch (err) {
-    return defaultDb;
+  const notificationCount = await notifications.countDocuments();
+  if (notificationCount === 0) {
+    await notifications.insertOne({
+      id: 'n1',
+      userId: 'u2',
+      message: 'Welcome to the SLTC Lost & Found portal! You can now report lost or found items.',
+      type: 'system',
+      isRead: false,
+      createdAt: new Date().toISOString()
+    });
   }
 };
 
-const writeData = (data) => {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+const getCollection = async (name) => {
+  const db = await connectToDatabase();
+  return db.collection(name);
 };
 
 module.exports = {
-  // User operations
-  getUsers: () => readData().users,
-  getUserById: (id) => readData().users.find(u => u.id === id),
-  getUserByUsername: (username) => readData().users.find(u => u.username.toLowerCase() === username.toLowerCase()),
-  createUser: (user) => {
-    const data = readData();
+  connect: connectToDatabase,
+  getUsers: async () => {
+    const users = await getCollection('users');
+    return users.find({}).toArray();
+  },
+  getUserById: async (id) => {
+    const users = await getCollection('users');
+    return users.findOne({ id });
+  },
+  getUserByUsername: async (username) => {
+    const users = await getCollection('users');
+    return users.findOne({
+      username: { $regex: `^${escapeRegex(username)}$`, $options: 'i' }
+    });
+  },
+  createUser: async (user) => {
+    const users = await getCollection('users');
     const newUser = {
       id: 'u_' + Math.random().toString(36).substr(2, 9),
       createdAt: new Date().toISOString(),
       ...user,
       password: hashPassword(user.password)
     };
-    data.users.push(newUser);
-    writeData(data);
+    await users.insertOne(newUser);
     return newUser;
   },
+  getItems: async () => {
+    const items = await getCollection('items');
+    return items.find({}).toArray();
+  },
+  getItemById: async (id) => {
+    const items = await getCollection('items');
+    return items.findOne({ id });
+  },
+  createItem: async (item) => {
+    const items = await getCollection('items');
+    const notifications = await getCollection('notifications');
+    const users = await getCollection('users');
 
-  // Item operations
-  getItems: () => readData().items,
-  getItemById: (id) => readData().items.find(i => i.id === id),
-  createItem: (item) => {
-    const data = readData();
     const newItem = {
       id: 'i_' + Math.random().toString(36).substr(2, 9),
       status: 'available',
       createdAt: new Date().toISOString(),
       ...item
     };
-    data.items.push(newItem);
-    writeData(data);
-    
-    // Check if we need to auto-generate a notification for matching items
-    // (e.g. if someone reported a found item of same category, alert users with matching lost items)
+
+    await items.insertOne(newItem);
+
     if (newItem.type === 'found') {
-      const lostMatches = data.items.filter(i => 
-        i.type === 'lost' && 
-        i.status === 'available' &&
-        i.category.toLowerCase() === newItem.category.toLowerCase() &&
-        i.reportedBy !== newItem.reportedBy
-      );
-      
-      lostMatches.forEach(match => {
-        const notification = {
+      const lostMatches = await items.find({
+        type: 'lost',
+        status: 'available',
+        category: { $regex: `^${escapeRegex(newItem.category)}$`, $options: 'i' },
+        reportedBy: { $ne: newItem.reportedBy }
+      }).toArray();
+
+      for (const match of lostMatches) {
+        await notifications.insertOne({
           id: 'n_' + Math.random().toString(36).substr(2, 9),
           userId: match.reportedBy,
           message: `A found item matching your lost "${match.title}" has been reported: "${newItem.title}" at ${newItem.location}.`,
           type: 'match_alert',
           isRead: false,
           createdAt: new Date().toISOString()
-        };
-        data.notifications.push(notification);
-      });
-      writeData(data);
+        });
+      }
     }
 
     return newItem;
   },
-  updateItem: (id, updates) => {
-    const data = readData();
-    const index = data.items.findIndex(i => i.id === id);
-    if (index !== -1) {
-      data.items[index] = { ...data.items[index], ...updates };
-      writeData(data);
-      return data.items[index];
+  updateItem: async (id, updates) => {
+    const items = await getCollection('items');
+    const item = await items.findOne({ id });
+    if (!item) {
+      return null;
     }
-    return null;
+
+    const updatedItem = { ...item, ...updates };
+    await items.updateOne({ id }, { $set: updatedItem });
+    return updatedItem;
   },
-  deleteItem: (id) => {
-    const data = readData();
-    data.items = data.items.filter(i => i.id !== id);
-    writeData(data);
+  deleteItem: async (id) => {
+    const items = await getCollection('items');
+    await items.deleteOne({ id });
     return true;
   },
+  getClaims: async () => {
+    const claims = await getCollection('claims');
+    return claims.find({}).toArray();
+  },
+  getClaimById: async (id) => {
+    const claims = await getCollection('claims');
+    return claims.findOne({ id });
+  },
+  createClaim: async (claim) => {
+    const claims = await getCollection('claims');
+    const items = await getCollection('items');
+    const notifications = await getCollection('notifications');
+    const users = await getCollection('users');
 
-  // Claim operations
-  getClaims: () => readData().claims,
-  getClaimById: (id) => readData().claims.find(c => c.id === id),
-  createClaim: (claim) => {
-    const data = readData();
     const newClaim = {
       id: 'c_' + Math.random().toString(36).substr(2, 9),
       status: 'pending',
       createdAt: new Date().toISOString(),
       ...claim
     };
-    data.claims.push(newClaim);
-    
-    // Update item claim state
-    const itemIndex = data.items.findIndex(i => i.id === claim.itemId);
-    if (itemIndex !== -1) {
-      data.items[itemIndex].status = 'claimed'; // change to claimed (meaning verification pending)
+
+    await claims.insertOne(newClaim);
+
+    const item = await items.findOne({ id: claim.itemId });
+    if (item) {
+      await items.updateOne({ id: claim.itemId }, { $set: { status: 'claimed' } });
     }
 
-    // Add alert notification for Admin and Security
-    const admins = data.users.filter(u => u.role === 'admin' || u.role === 'security');
-    admins.forEach(admin => {
-      data.notifications.push({
+    const admins = await users.find({ role: { $in: ['admin', 'security'] } }).toArray();
+    for (const admin of admins) {
+      await notifications.insertOne({
         id: 'n_' + Math.random().toString(36).substr(2, 9),
         userId: admin.id,
-        message: `New claim request submitted by ${claim.claimedByName} for "${data.items[itemIndex]?.title || 'Item'}".`,
+        message: `New claim request submitted by ${claim.claimedByName} for "${item?.title || 'Item'}".`,
         type: 'claim_alert',
         isRead: false,
         createdAt: new Date().toISOString()
       });
-    });
+    }
 
-    writeData(data);
     return newClaim;
   },
-  updateClaimStatus: (claimId, status, rejectReason = '') => {
-    const data = readData();
-    const claimIndex = data.claims.findIndex(c => c.id === claimId);
-    if (claimIndex === -1) return null;
-    
-    const claim = data.claims[claimIndex];
-    claim.status = status;
-    if (rejectReason) claim.rejectReason = rejectReason;
-    
-    const itemIndex = data.items.findIndex(i => i.id === claim.itemId);
-    const item = data.items[itemIndex];
-    
+  updateClaimStatus: async (claimId, status, rejectReason = '') => {
+    const claims = await getCollection('claims');
+    const items = await getCollection('items');
+    const notifications = await getCollection('notifications');
+
+    const claim = await claims.findOne({ id: claimId });
+    if (!claim) {
+      return null;
+    }
+
+    const updates = { status };
+    if (rejectReason) {
+      updates.rejectReason = rejectReason;
+    }
+
+    await claims.updateOne({ id: claimId }, { $set: updates });
+
+    const item = await items.findOne({ id: claim.itemId });
     if (status === 'approved') {
       if (item) {
-        item.status = 'returned'; // item is officially returned
+        await items.updateOne({ id: claim.itemId }, { $set: { status: 'returned' } });
       }
-      
-      // Notify the claimant
-      data.notifications.push({
+
+      await notifications.insertOne({
         id: 'n_' + Math.random().toString(36).substr(2, 9),
         userId: claim.claimedBy,
         message: `Your claim for "${item ? item.title : 'item'}" has been APPROVED! Please visit the Security office to collect your item.`,
@@ -298,32 +337,35 @@ module.exports = {
         createdAt: new Date().toISOString()
       });
 
-      // Reject all other pending claims for this item
-      data.claims.forEach(c => {
-        if (c.itemId === claim.itemId && c.id !== claimId && c.status === 'pending') {
-          c.status = 'rejected';
-          c.rejectReason = 'Item has been returned to another claimant.';
-          
-          data.notifications.push({
-            id: 'n_' + Math.random().toString(36).substr(2, 9),
-            userId: c.claimedBy,
-            message: `Your claim for "${item ? item.title : 'item'}" was rejected. ${c.rejectReason}`,
-            type: 'claim_update',
-            isRead: false,
-            createdAt: new Date().toISOString()
-          });
-        }
-      });
-    } else if (status === 'rejected') {
-      // If rejected, set item back to available so other users can see it,
-      // UNLESS there are other pending claims? Let's check.
-      const otherPendingClaims = data.claims.some(c => c.itemId === claim.itemId && c.id !== claimId && c.status === 'pending');
-      if (item && !otherPendingClaims) {
-        item.status = 'available';
+      const otherPendingClaims = await claims.find({
+        itemId: claim.itemId,
+        id: { $ne: claimId },
+        status: 'pending'
+      }).toArray();
+
+      for (const pendingClaim of otherPendingClaims) {
+        await claims.updateOne({ id: pendingClaim.id }, { $set: { status: 'rejected', rejectReason: 'Item has been returned to another claimant.' } });
+        await notifications.insertOne({
+          id: 'n_' + Math.random().toString(36).substr(2, 9),
+          userId: pendingClaim.claimedBy,
+          message: `Your claim for "${item ? item.title : 'item'}" was rejected. Item has been returned to another claimant.`,
+          type: 'claim_update',
+          isRead: false,
+          createdAt: new Date().toISOString()
+        });
       }
-      
-      // Notify claimant
-      data.notifications.push({
+    } else if (status === 'rejected') {
+      const otherPendingClaims = await claims.countDocuments({
+        itemId: claim.itemId,
+        id: { $ne: claimId },
+        status: 'pending'
+      });
+
+      if (item && otherPendingClaims === 0) {
+        await items.updateOne({ id: claim.itemId }, { $set: { status: 'available' } });
+      }
+
+      await notifications.insertOne({
         id: 'n_' + Math.random().toString(36).substr(2, 9),
         userId: claim.claimedBy,
         message: `Your claim for "${item ? item.title : 'item'}" has been REJECTED. Reason: ${rejectReason || 'Insufficient proof.'}`,
@@ -332,30 +374,21 @@ module.exports = {
         createdAt: new Date().toISOString()
       });
     }
-    
-    writeData(data);
-    return claim;
-  },
 
-  // Notification operations
-  getNotifications: (userId) => {
-    const all = readData().notifications;
-    return all.filter(n => n.userId === userId).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return { ...claim, ...updates };
   },
-  markNotificationAsRead: (id) => {
-    const data = readData();
-    const index = data.notifications.findIndex(n => n.id === id);
-    if (index !== -1) {
-      data.notifications[index].isRead = true;
-      writeData(data);
-      return true;
-    }
-    return false;
+  getNotifications: async (userId) => {
+    const notifications = await getCollection('notifications');
+    return notifications.find({ userId }).sort({ createdAt: -1 }).toArray();
   },
-  clearNotifications: (userId) => {
-    const data = readData();
-    data.notifications = data.notifications.filter(n => n.userId !== userId);
-    writeData(data);
+  markNotificationAsRead: async (id) => {
+    const notifications = await getCollection('notifications');
+    const result = await notifications.updateOne({ id }, { $set: { isRead: true } });
+    return result.modifiedCount > 0;
+  },
+  clearNotifications: async (userId) => {
+    const notifications = await getCollection('notifications');
+    await notifications.deleteMany({ userId });
     return true;
   }
 };

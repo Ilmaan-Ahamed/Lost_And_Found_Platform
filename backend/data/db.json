@@ -117,7 +117,7 @@
       "userId": "u2",
       "message": "Welcome to the SLTC Lost & Found portal! You can now report lost or found items.",
       "type": "system",
-      "isRead": false,
+      "isRead": true,
       "createdAt": "2026-07-16T10:01:46.451Z"
     },
     {
