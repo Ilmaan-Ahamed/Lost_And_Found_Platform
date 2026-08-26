@@ -13,29 +13,15 @@ const Footer = () => {
             <p style={{ fontSize: '13px', lineHeight: '1.6', marginBottom: '16px', color: '#94a3b8' }}>
               Web Based Lost & Found System developed for the CCS2311 Human Factors in Computer Systems Module. Providing a centralized, user-centric approach to asset management on campus.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={14} className="card-meta-icon" />
-                <span>SLTC Research University, Padukka, Sri Lanka</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Phone size={14} className="card-meta-icon" />
-                <span>+94 11 210 0500</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={14} className="card-meta-icon" />
-                <span>support@sltc.ac.lk</span>
-              </div>
-            </div>
           </div>
 
           <div>
             <h4 className="footer-title" style={{ fontSize: '15px' }}>Project Group 22</h4>
             <ul className="footer-links" style={{ fontSize: '13px' }}>
-              <li>MJ. Ilmaan Ahamed (CIT-24-01-0369)</li>
-              <li>M. Mohamed Afrith (CIT-24-01-0297)</li>
-              <li>R. Mohamed Himas (CIT-24-01-0302)</li>
-              <li>AS. Mohamed Aasim (CIT-24-01-0298)</li>
+              <li>MJ. Ilmaan Ahamed  <a href="https://github.com/Ilmaan-Ahamed" target="_blank" rel="noopener noreferrer">GitHub</a> </li>
+              <li>M. Mohamed Afrith  <a href="https://github.com/MhoAfrith" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li>R. Mohamed Himas   <a href="https://github.com/himasRm" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li>AS. Mohamed Aasim  <a href="https://github.com/MOHAMED-AASIM" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             </ul>
           </div>
 
