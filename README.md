@@ -36,7 +36,8 @@ Losing a phone, ID card, or wallet on campus is stressful — and sorting throug
 - JWT (`jsonwebtoken`) for authentication
 - `bcryptjs` for password hashing
 - `multer` for image uploads
-- Simple JSON file storage (`backend/data/db.json`) — no external database required
+ - `multer` + Cloudinary for image uploads
+ - MongoDB (Mongoose) for persistent storage (MongoDB Atlas recommended)
 
 ## 📁 Project Structure
 
@@ -77,6 +78,13 @@ npm install
 npm start
 ```
 The API server runs on `http://localhost:5000` by default.
+
+### Backend configuration
+
+- Create a `.env` file in the `backend/` folder. Copy `backend/.env.example` and fill in the values.
+- You will need a MongoDB Atlas connection string for `MONGODB_URI` and a Cloudinary account for image uploads. Also set `JWT_SECRET` and `FRONTEND_URL` (e.g. `http://localhost:5173`).
+
+When deploying to Render/Koyeb, set the same environment variables in the service dashboard. The platform will provide `PORT` automatically.
 
 ### 3. Set up the frontend
 ```bash

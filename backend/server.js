@@ -1,11 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const db = require('./db');
 
 const app = express();
@@ -18,7 +18,7 @@ const asyncHandler = (handler) => (req, res, next) => {
 
 // Enable CORS
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
@@ -26,37 +26,24 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Setup file uploads
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-// Serve uploaded images statically
-app.use('/uploads', express.static(uploadsDir));
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, 'img_' + Math.random().toString(36).substr(2, 9) + ext);
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'sltc_lost_and_found',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif']
   }
 });
 
 const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|webp|gif/;
-    const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowedTypes.test(file.mimetype);
-    if (ext && mime) {
-      return cb(null, true);
-    }
-    cb(new Error('Only images are allowed (JPEG, JPG, PNG, WEBP, GIF)'));
-  }
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // --- Middleware ---
@@ -189,7 +176,8 @@ app.post('/api/items', authenticate, upload.single('photo'), asyncHandler(async 
 
   let photoUrl = '';
   if (req.file) {
-    photoUrl = `/uploads/${req.file.filename}`;
+    // multer-storage-cloudinary sets `path` to the uploaded file URL
+    photoUrl = req.file.path || req.file.secure_url || req.file.url || '';
   }
 
   const newItem = await db.createItem({

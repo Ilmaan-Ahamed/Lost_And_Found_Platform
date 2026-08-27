@@ -73,6 +73,7 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.development.local
+.env.example
 .env.test.local
 .env.production.local
 .env.local
@@ -130,5 +131,3 @@ Thumbs.db
 frontend/dist/
 
 # Backend Uploads
-backend/uploads/*
-!backend/uploads/.gitkeep
